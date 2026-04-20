@@ -1,0 +1,28 @@
+{
+  "name": "pagespeed",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "chart.js": "^4.5.1",
+    "cheerio": "^1.2.0",
+    "lighthouse": "^13.1.0",
+    "lucide-react": "^1.8.0",
+    "next": "16.2.4",
+    "puppeteer": "^24.41.0",
+    "react": "19.2.4",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4"
+  }
+}
