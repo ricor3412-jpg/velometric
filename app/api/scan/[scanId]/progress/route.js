@@ -4,7 +4,7 @@ import { getScanLogs } from '@/lib/db';
 export async function GET(req, { params }) {
   try {
     const { scanId } = await params;
-    const logs = getScanLogs(scanId);
+    const logs = await getScanLogs(scanId);
     
     return NextResponse.json({ success: true, logs });
   } catch (error) {

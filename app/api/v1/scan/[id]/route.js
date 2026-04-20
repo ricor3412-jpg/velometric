@@ -13,7 +13,7 @@ export async function GET(req, { params }) {
     const { id } = await params;
     
     // 2. Fetch scan metadata
-    const scan = getScanById(id);
+    const scan = await getScanById(id);
     if (!scan) {
       return NextResponse.json({ error: 'Scan not found' }, { status: 404 });
     }
@@ -21,7 +21,7 @@ export async function GET(req, { params }) {
     // 3. Fetch results if finished
     let results = [];
     if (scan.status === 'completed') {
-      results = getScanResults(id);
+      results = await getScanResults(id);
     }
 
     // 4. Transform results for agent consumption (remove heavy raw_data if not requested?)

@@ -12,7 +12,7 @@ export async function GET(req) {
   }
 
   // Fetch data from database
-  const scans = getDomainScans(domain);
+  const scans = await getDomainScans(domain);
   if (!scans || scans.length === 0) {
     return NextResponse.json({ error: 'No scans found for this domain' }, { status: 404 });
   }
@@ -22,7 +22,7 @@ export async function GET(req) {
     return NextResponse.json({ error: 'Scan not found' }, { status: 404 });
   }
 
-  const results = getScanResults(targetScan.id);
+  const results = await getScanResults(targetScan.id);
   
   // Group by device
   const mobileResults = results.filter(r => r.device_type === 'mobile');

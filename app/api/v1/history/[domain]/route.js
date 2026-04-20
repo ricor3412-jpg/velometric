@@ -13,7 +13,7 @@ export async function GET(req, { params }) {
     const { domain } = await params;
     
     // 2. Fetch history
-    const history = getDomainScans(domain);
+    const history = await getDomainScans(domain);
     
     if (!history || history.length === 0) {
       return NextResponse.json({ 

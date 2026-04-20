@@ -21,8 +21,8 @@ export async function POST(req) {
     const domainName = parsedUrl.hostname;
     
     // Setup DB records
-    const domain = getOrCreateDomain(domainName, parsedUrl.origin);
-    const scanId = startScan(domain.id, networkProfile);
+    const domain = await getOrCreateDomain(domainName, parsedUrl.origin);
+    const scanId = await startScan(domain.id, networkProfile);
 
     // Fire and forget the heavy process
     const crawlUrl = parsedUrl.origin.endsWith('/') ? parsedUrl.origin : parsedUrl.origin + '/';

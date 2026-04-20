@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['puppeteer', 'lighthouse', 'better-sqlite3'],
+  serverExternalPackages: ['puppeteer', 'lighthouse'],
 };
 
 export default nextConfig;

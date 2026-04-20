@@ -3,7 +3,7 @@ import { getLatestScans } from '@/lib/db';
 
 export async function GET() {
   try {
-    const scans = getLatestScans();
+    const scans = await getLatestScans();
     return NextResponse.json({ success: true, scans });
   } catch (error) {
     console.error('API Get Scans Error:', error);

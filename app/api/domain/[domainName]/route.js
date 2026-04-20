@@ -6,7 +6,7 @@ export async function GET(req, { params }) {
     const { domainName } = await params;
     
     // Get all scans for this domain
-    const scans = getDomainScans(domainName);
+    const scans = await getDomainScans(domainName);
     
     if (!scans || scans.length === 0) {
       return NextResponse.json({ success: false, error: 'Domain not found or no scans yet' }, { status: 404 });
@@ -14,7 +14,7 @@ export async function GET(req, { params }) {
 
     // Attach results to each scan
     for (let scan of scans) {
-      scan.results = getScanResults(scan.id);
+      scan.results = await getScanResults(scan.id);
       
       // Calculate average score for the full scan
       if (scan.results.length > 0) {
