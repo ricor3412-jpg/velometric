@@ -9,7 +9,9 @@ function mapToTags(results) {
 
   results.forEach(res => {
     let parsed = {};
-    try { parsed = JSON.parse(res.raw_data || '{}'); } catch (e) {}
+    try { 
+      parsed = typeof res.raw_data === 'string' ? JSON.parse(res.raw_data || '{}') : (res.raw_data || {});
+    } catch (e) {}
     const issues = parsed.issues || [];
     const metrics = parsed.metrics || {};
     const path = res.url.replace(/https?:\/\/[^/]+/, '') || '/';
@@ -137,7 +139,9 @@ function mapToTags(results) {
 function extractVariables(results) {
   return results.map(res => {
     let parsed = {};
-    try { parsed = JSON.parse(res.raw_data || '{}'); } catch (e) {}
+    try { 
+      parsed = typeof res.raw_data === 'string' ? JSON.parse(res.raw_data || '{}') : (res.raw_data || {});
+    } catch (e) {}
     const metrics = parsed.metrics || {};
     const path = res.url.replace(/https?:\/\/[^/]+/, '') || '/';
 
@@ -476,7 +480,9 @@ export default function TagInspector({ results, scans, activeScanIdx, onScanSele
              </div>
              
              {results.flatMap(r => {
-               let rp = {}; try { rp = JSON.parse(r.raw_data); } catch(e) {}
+               let rp = {}; try { 
+                 rp = typeof r.raw_data === 'string' ? JSON.parse(r.raw_data) : (r.raw_data || {});
+               } catch(e) {}
                return Object.values(rp?.audits || {}).filter(a => a.score < 0.9 && FIX_ADVICE[a.id]);
              }).slice(0, 10).map((audit, i) => (
                 <div key={i} className="p-5 rounded-2xl border border-white/5 bg-black hover:border-white/10 transition-all">

@@ -61,7 +61,7 @@ export async function GET(req) {
       let metrics = {};
       let issuesHtml = '';
       try {
-        const parsed = JSON.parse(r.raw_data || '{}');
+        const parsed = typeof r.raw_data === 'string' ? JSON.parse(r.raw_data || '{}') : (r.raw_data || {});
         if (parsed && parsed.metrics) metrics = parsed.metrics;
         if (parsed && parsed.issues && Array.isArray(parsed.issues)) {
           issuesHtml = parsed.issues.slice(0, 8).map(issue => 

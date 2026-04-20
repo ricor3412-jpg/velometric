@@ -265,7 +265,7 @@ export default function DomainReport({ params }) {
 
                   {filteredResults.map((res, i) => {
                     const path = res.url.replace(`https://${domainName}`, '').replace(`http://${domainName}`, '') || '/';
-                    const parsed = JSON.parse(res.raw_data || '[]');
+                    const parsed = typeof res.raw_data === 'string' ? JSON.parse(res.raw_data || '[]') : (res.raw_data || []);
                     
                     let issuesObj = [];
                     let screenshotUrl = null;
