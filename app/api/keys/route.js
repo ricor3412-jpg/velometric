@@ -6,7 +6,8 @@ export async function GET() {
     const keys = await listApiKeys();
     return NextResponse.json({ success: true, keys });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to list keys' }, { status: 500 });
+    console.error('API List Keys Error Detail:', error);
+    return NextResponse.json({ error: 'Failed to list keys', details: error.message }, { status: 500 });
   }
 }
 
@@ -18,7 +19,8 @@ export async function POST(req) {
     const key = await createApiKey(name);
     return NextResponse.json({ success: true, key });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create key' }, { status: 500 });
+    console.error('API Create Key Error Detail:', error);
+    return NextResponse.json({ error: 'Failed to create key', details: error.message }, { status: 500 });
   }
 }
 

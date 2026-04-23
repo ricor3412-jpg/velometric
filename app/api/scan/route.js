@@ -42,8 +42,8 @@ export async function GET(req) {
       scan: { ...scan, results: summary, allResults: results } 
     });
   } catch (error) {
-    console.error('API Get Scan Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('API Get Scan Detail Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
   }
 }
 
@@ -82,7 +82,7 @@ export async function POST(req) {
       warning: isVercel ? 'Vercel Serverless Functions have execution limits. Large site audits may be interrupted.' : null
     });
   } catch (error) {
-    console.error('API Scan Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('API Post Scan Detail Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
   }
 }

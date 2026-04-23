@@ -6,7 +6,15 @@ export async function GET() {
     const scans = await getLatestScans();
     return NextResponse.json({ success: true, scans });
   } catch (error) {
-    console.error('API Get Scans Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('API Get Scans Error Detail:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
+    });
+    return NextResponse.json({ 
+      error: 'Failed to fetch scans', 
+      details: error.message 
+    }, { status: 500 });
   }
 }
