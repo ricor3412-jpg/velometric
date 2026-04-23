@@ -35,13 +35,16 @@ export async function POST(req) {
     const crawlUrl = parsedUrl.origin.endsWith('/') ? parsedUrl.origin : parsedUrl.origin + '/';
     runAsyncAuditProcess(scanId, crawlUrl, network);
 
+    const isVercel = process.env.VERCEL === '1';
+
     // 5. Standardized response for agents
     return NextResponse.json({ 
       success: true, 
       scan_id: scanId, 
       domain: domainName,
       status: 'initiated',
-      message: 'Audit process started successfully. Use GET /api/v1/scan/[id] to poll for results.'
+      message: 'Audit process started successfully.',
+      warning: isVercel ? 'Serverless environment detected. Background processing may be limited by execution timeouts.' : null
     }, { status: 201 });
 
   } catch (error) {

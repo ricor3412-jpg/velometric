@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Activity, Search, RefreshCw, ChevronRight, Zap, Globe, LayoutGrid } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { 
+  Activity, Search, RefreshCw, ChevronRight, Zap, 
+  Globe, Smartphone, Wifi, Cpu, SignalHigh,
+  Terminal, Shield, BarChart3, Clock, ArrowRight,
+  Database, Server, Lock, LayoutGrid, ShieldCheck
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
@@ -11,28 +16,31 @@ export default function Home() {
   const [networkProfile, setNetworkProfile] = useState('5g');
 
   const NETWORKS = [
-    { id: 'none', label: 'Sin Límites', info: 'Red local' },
-    { id: '5g', label: 'Ultra 5G', info: '20ms / 50Mbps' },
-    { id: '4g', label: '4G LTE', info: '40ms / 10Mbps' },
-    { id: '3g-fast', label: '3G Rápido', info: '150ms / 1.6Mbps' },
-    { id: '3g-slow', label: '3G Lento', info: '400ms / 400kbps' },
+    { id: 'none', label: 'Fiber Optic', info: '0ms / 1Gbps', icon: <SignalHigh size={18} /> },
+    { id: '5g', label: 'Ultra 5G', info: '20ms / 50Mbps', icon: <Wifi size={18} /> },
+    { id: '4g', label: '4G LTE', info: '40ms / 10Mbps', icon: <Smartphone size={18} /> },
+    { id: '3g-fast', label: '3G Rapid', info: '150ms / 1.6Mbps', icon: <Cpu size={18} /> },
   ];
 
-  useEffect(() => {
-    fetchScans();
-  }, []);
-
-  const fetchScans = async () => {
+  const fetchScans = useCallback(async () => {
     try {
       const res = await fetch('/api/scans');
+      if (!res.ok) throw new Error('Network response was not ok');
       const data = await res.json();
       if (data.success) {
         setScans(data.scans);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Fetch Scans Error:', e);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      await fetchScans();
+    };
+    init();
+  }, [fetchScans]);
 
   const startScan = async (e) => {
     e.preventDefault();
@@ -53,142 +61,237 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: submissionUrl, networkProfile })
       });
+      
       const data = await res.json();
+
       if (data.success) {
         setUrl('');
         fetchScans();
       } else {
-        alert(data.error || 'Fallo al iniciar escaneo');
+        alert(data.error || 'Scan failed');
       }
     } catch (e) {
-      alert('Error iniciando escaneo');
+      alert(e.message || 'Network unreachable');
     }
     setLoading(false);
   };
 
   return (
-    <div className="animate-fade-in">
-      <header className="flex justify-between items-center mb-16 flex-mobile-col gap-6">
-        <div>
-          <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>Velo<span style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Metric</span></h1>
-          <p style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>Infraestructura de auditoría de precisión</p>
+    <div className="container-full animate-fade-in section-padding">
+      
+      {/* Premium Hero Section */}
+      <div className="mb-32">
+        <div className="flex items-center gap-4 mb-10">
+          <span className="velo-badge velo-badge-running">Engine v5.0.4</span>
+          <span className="text-[11px] font-black text-primary uppercase tracking-[0.4em]">Quantum-Ready Infrastructure</span>
         </div>
-        <Link href="/integrations" className="velo-btn-primary" style={{ background: 'rgba(255,255,255,0.03)', color: 'white', border: '1px solid var(--glass-border)', padding: '0.8rem 1.5rem' }}>
-          <LayoutGrid size={20} />
-          <span>Ecosistema API</span>
-        </Link>
-      </header>
-
-
-      <section className="velo-card mb-20">
-        <div className="flex items-center gap-6 mb-12">
-          <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%)', padding: '1rem', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '16px', color: 'var(--primary-light)' }}>
-            <Search size={32} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-end">
+          <div className="lg:col-span-8">
+            <h1 className="text-8xl lg:text-9xl font-black tracking-tighter leading-[0.8] mb-12 text-white">
+              Engineering <br />
+              <span style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                Digital Velocity.
+              </span>
+            </h1>
+            <p className="text-2xl font-medium text-text-muted max-w-3xl leading-relaxed">
+              Industrial-grade performance telemetry and infrastructure diagnostics. 
+              Monitor your core vitals with sub-millisecond precision.
+            </p>
           </div>
-          <div>
-            <h2 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>Nueva Auditoría</h2>
-            <p style={{ color: 'var(--text-muted)' }}>Analiza cualquier URL con perfiles de red simulados de alta fidelidad</p>
+          
+          <div className="lg:col-span-4 flex justify-start lg:justify-end gap-20">
+             <div className="flex flex-col gap-4">
+                <span className="text-[11px] font-bold text-text-dim uppercase tracking-widest">Core Stability</span>
+                <span className="text-6xl font-black text-white font-mono tracking-tighter">99.9%</span>
+             </div>
+             <div className="flex flex-col gap-4">
+                <span className="text-[11px] font-bold text-text-dim uppercase tracking-widest">Audit Nodes</span>
+                <span className="text-6xl font-black text-primary font-mono tracking-tighter">{scans.length}</span>
+             </div>
           </div>
         </div>
+      </div>
 
-        <form onSubmit={startScan}>
-          <div className="velo-input-group mb-10" style={{ padding: '0.75rem', alignItems: 'center', background: 'rgba(0,0,0,0.3)' }}>
-            <Globe size={24} style={{ marginLeft: '1.5rem', color: 'rgba(255,255,255,0.2)' }} />
-            <input
-              type="text"
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              placeholder="https://tu-sitio-web.com"
-              className="velo-input"
-              style={{ fontSize: '1.2rem', padding: '1rem 1.5rem' }}
-              required
-              disabled={loading}
-            />
-            <button type="submit" className="velo-btn-primary" style={{ padding: '1rem 2rem', fontSize: '1rem' }} disabled={loading}>
-              {loading ? <RefreshCw className="animate-spin" size={24} /> : <Zap size={24} />}
-              <span>{loading ? 'Inicializando...' : 'Lanzar Escaneo'}</span>
-            </button>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 mb-24">
+        {/* Main Interface (8/12) */}
+        <div className="lg:col-span-8 flex flex-col gap-20">
+          
+          {/* Launcher Card */}
+          <section className="velo-card p-16">
+            <div className="flex items-center gap-8 mb-16">
+              <div className="p-6 bg-primary/10 rounded-3xl text-primary border border-primary/20 shadow-[0_0_40px_rgba(59,130,246,0.15)]">
+                <Zap size={40} />
+              </div>
+              <div>
+                <h3 className="text-3xl font-black tracking-tight text-white">System Auditor</h3>
+                <p className="text-[11px] font-black text-text-dim uppercase tracking-widest mt-2">Execute high-fidelity performance scan (Top 10 pages, Dual Device)</p>
+              </div>
+            </div>
 
-
-          <div>
-            <label style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-light)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', display: 'block' }}> Perfil de Simulación </label>
-            <div className="grid grid-cols-4 gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
-              {NETWORKS.map(net => (
-                <button
-                  key={net.id}
-                  type="button"
-                  onClick={() => setNetworkProfile(net.id)}
-                  className={`chip ${networkProfile === net.id ? 'active' : ''}`}
-                  style={{ width: '100%' }}
-                >
-                  <strong>{net.label}</strong>
-                  <span>{net.info}</span>
+            <form onSubmit={startScan} className="flex flex-col gap-12">
+              <div className="velo-input-group p-3">
+                <div className="flex items-center pl-8 text-text-dim">
+                  <Globe size={24} />
+                </div>
+                <input 
+                  type="text" 
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  placeholder="Enter target protocol (e.g. domain.com)"
+                  className="velo-input px-8 text-xl"
+                  required
+                  disabled={loading}
+                />
+                <button type="submit" className="velo-btn-primary px-12 py-5" disabled={loading}>
+                  {loading ? <RefreshCw className="animate-spin" size={24} /> : <Search size={24} />}
+                  <span>{loading ? 'Analyzing...' : 'Initialize'}</span>
                 </button>
-              ))}
+              </div>
+
+              <div className="flex flex-col gap-8">
+                 <div className="flex items-center gap-4">
+                   <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_15px_#3b82f6]" />
+                   <h4 className="text-[11px] font-black text-text-muted uppercase tracking-widest">Network Simulation Layer</h4>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                   {NETWORKS.map(net => (
+                     <button
+                       key={net.id}
+                       type="button"
+                       onClick={() => setNetworkProfile(net.id)}
+                       className={`chip ${networkProfile === net.id ? 'active' : ''} !p-8`}
+                     >
+                       <div className="mb-6 opacity-50 group-hover:opacity-100 transition-opacity">
+                         {net.icon}
+                       </div>
+                       <strong className="text-lg">{net.label}</strong>
+                       <span className="text-sm">{net.info}</span>
+                     </button>
+                   ))}
+                 </div>
+              </div>
+            </form>
+          </section>
+
+          {/* Intelligence Feed */}
+          <div className="flex flex-col gap-12">
+            <div className="flex items-center justify-between px-4 mb-6">
+               <div className="flex items-center gap-8">
+                  <Activity size={28} className="text-primary" />
+                  <h5 className="text-lg font-black uppercase tracking-[0.3em] text-white">Historical Telemetry Logs</h5>
+               </div>
+               <div className="text-[11px] font-black text-text-dim uppercase tracking-[0.2em] bg-white/[0.03] px-6 py-3 rounded-full border border-white/[0.05]">
+                  {scans.length} Node{scans.length !== 1 ? 's' : ''} Recorded
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-10">
+              {scans.length === 0 ? (
+                <div className="velo-card py-32 text-center border-dashed opacity-40">
+                   <Activity size={64} className="mx-auto mb-8 text-text-dim" strokeWidth={1} />
+                   <p className="text-[12px] font-black uppercase tracking-[0.2em] text-text-dim">No telemetry data recorded</p>
+                </div>
+              ) : (
+                scans.map((scan, i) => (
+                  <Link 
+                    href={`/report/${scan.name}`} 
+                    key={scan.id || i} 
+                    className="velo-card !p-10 flex justify-between items-center no-underline group hover:!bg-white/[0.04] transition-all duration-500"
+                  >
+                    <div className="flex items-center gap-12 pl-4">
+                      <div className="p-6 bg-white/[0.03] border border-white/[0.05] rounded-2xl group-hover:border-primary/30 transition-all relative">
+                         <Globe size={32} className="text-text-dim group-hover:text-primary transition-all" />
+                         {scan.status === 'running' && (
+                           <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full animate-ping" />
+                         )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-3xl font-black text-white tracking-tighter mb-3">{scan.name}</span>
+                        <div className="flex items-center gap-6">
+                          <span className={`velo-badge ${scan.status === 'completed' ? 'velo-badge-success' : 'velo-badge-running'}`}>
+                            {scan.status.toUpperCase()}
+                          </span>
+                          <span className="text-[12px] font-bold text-text-dim flex items-center gap-2">
+                             <Clock size={16} />
+                             {new Date(scan.started_at).toLocaleTimeString('en-US', { hour: '2-digit', hour12: false, minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-20 pr-8">
+                       <div className="flex flex-col items-end">
+                         <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.2em] mb-3">Performance Index</span>
+                         <span className={`text-5xl font-black font-mono tracking-tighter ${scan.results?.performance >= 90 ? 'text-success' : scan.results?.performance >= 50 ? 'text-warning' : 'text-error'}`}>
+                            {scan.results?.performance || '--'}
+                         </span>
+                       </div>
+                       <div className="p-5 rounded-2xl bg-white/[0.03] text-text-dim group-hover:text-primary group-hover:bg-primary/10 transition-all">
+                         <ChevronRight size={28} />
+                       </div>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
-        </form>
-      </section>
-
-      <div className="flex justify-between items-center mb-10">
-        <div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Inteligencia Reciente</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Historial de auditorías críticas procesadas</p>
         </div>
-        <button onClick={fetchScans} className="velo-btn-primary" style={{ background: 'transparent', border: '1px solid var(--glass-border)', color: 'white', padding: '0.6rem 1.2rem' }}>
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          <span>Refrescar Feed</span>
-        </button>
-      </div>
 
-
-      <div className="flex flex-col gap-6">
-        {scans.length === 0 ? (
-          <div className="velo-card" style={{ textAlign: 'center', padding: '8rem 2rem' }}>
-            <Activity size={64} style={{ opacity: 0.05, marginBottom: '2rem', margin: '0 auto' }} />
-            <p style={{ color: 'var(--text-dim)', fontSize: '1.1rem' }}>No hay registros disponibles en la red local.</p>
-          </div>
-        ) : (
-          scans.map((scan, i) => (
-            <Link href={`/report/${scan.name}`} key={i} className="velo-card flex justify-between items-center hover:scale-[1.01]" style={{ textDecoration: 'none', color: 'inherit', padding: '2rem 3rem' }}>
-              <div className="flex items-center gap-8" style={{ minWidth: 0 }}>
-                <div style={{ position: 'relative', background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                  <Globe size={32} style={{ color: 'rgba(255,255,255,0.3)' }} />
-                  <div style={{ 
-                    position: 'absolute', top: '-6px', right: '-6px', width: '16px', height: '16px', borderRadius: '50%', 
-                    background: scan.status === 'completed' ? 'var(--score-good)' : scan.status === 'running' ? 'var(--primary)' : 'var(--score-poor)',
-                    boxShadow: `0 0 20px ${scan.status === 'completed' ? 'var(--score-good)' : 'var(--primary)'}`,
-                    border: '3px solid #050507'
-                  }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.02em' }}>{scan.name}</h3>
-                  <div className="flex items-center gap-4">
-                    <span className={`velo-badge ${scan.status === 'completed' ? 'velo-badge-success' : 'velo-badge-running'}`} style={{ fontSize: '0.7rem', padding: '4px 10px' }}>{scan.status}</span>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 600 }}>
-                      {new Date(scan.started_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} <span style={{ opacity: 0.3, margin: '0 4px' }}>•</span> {new Date(scan.started_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
+        {/* Tactical Sidebar (4/12) */}
+        <div className="lg:col-span-4 flex flex-col gap-12">
+           <div className="velo-card p-12 bg-gradient-to-br from-primary/10 via-transparent to-transparent border-primary/20 relative overflow-hidden">
+              <div className="flex items-center gap-6 mb-10 pb-8 border-b border-white/[0.05]">
+                <Server size={22} className="text-primary" />
+                <h4 className="text-[12px] font-black uppercase tracking-[0.2em] text-text-secondary">Node Status</h4>
               </div>
-              <div className="flex items-center gap-6">
-                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }} className="hide-mobile">Ficha Técnica</span>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '14px', border: '1px solid var(--glass-border)', color: 'rgba(255,255,255,0.4)' }}>
-                  <ChevronRight size={24} />
-                </div>
+              
+              <div className="flex flex-col gap-12">
+                 <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-[11px] font-black text-text-dim uppercase tracking-widest mb-3">Telemetry</div>
+                      <div className="text-2xl font-black text-white tracking-tight">Active & Secure</div>
+                    </div>
+                    <div className="p-4 bg-success/10 rounded-2xl border border-success/20">
+                      <ShieldCheck size={24} className="text-success" />
+                    </div>
+                 </div>
+
+                 <div className="flex flex-col gap-6">
+                    {[
+                      { label: 'Uplink Latency', value: '14ms', color: 'text-primary' },
+                      { label: 'Node Throughput', value: '8.4 GB/s', color: 'text-white' },
+                      { label: 'System Integrity', value: '99.99%', color: 'text-success' }
+                    ].map((item, i) => (
+                      <div key={i} className="flex justify-between items-center">
+                        <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.1em]">{item.label}</span>
+                        <span className={`${item.color} font-mono font-bold text-sm`}>{item.value}</span>
+                      </div>
+                    ))}
+                 </div>
               </div>
-            </Link>
-          ))
-        )}
+           </div>
+
+           <div className="velo-card p-12 bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/10 relative overflow-hidden group">
+              <div className="flex flex-col gap-8 relative z-10">
+                 <div className="p-4 bg-secondary/10 rounded-2xl text-secondary w-fit border border-secondary/20">
+                   <Terminal size={28} />
+                 </div>
+                 <h4 className="text-3xl font-black tracking-tighter text-white leading-[1.1]">
+                   Precision API <br />Infrastructure
+                 </h4>
+                 <p className="text-lg font-medium text-text-muted leading-relaxed">
+                   Integrate your development pipelines for automated performance gates and telemetry.
+                 </p>
+                 <button className="velo-btn-primary !bg-white/5 !border-white/10 hover:!bg-white/10 w-full justify-center mt-6 py-5">
+                   <span>Review Documentation</span>
+                   <ArrowRight size={20} />
+                 </button>
+              </div>
+           </div>
+        </div>
       </div>
-
-
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .hide-mobile { display: none; }
-        }
-      `}</style>
     </div>
   );
 }

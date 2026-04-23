@@ -1,7 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Key, Plus, Trash2, Copy, Check, Terminal, ShieldCheck, Zap, Send, Code, Database, Globe, RefreshCw, ArrowLeft } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { 
+  Key, Plus, Trash2, Copy, Check, Terminal, ShieldCheck, 
+  Zap, Send, Code, Database, Globe, RefreshCw, ArrowLeft,
+  Activity, Cpu, Shield, ArrowUpRight, Lock, Server
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function Integrations() {
@@ -17,44 +21,66 @@ export default function Integrations() {
   const [testResponse, setTestResponse] = useState(null);
   const [testing, setTesting] = useState(false);
 
-  useEffect(() => {
-    fetchKeys();
+  const fetchKeys = useCallback(async () => {
+    try {
+      const res = await fetch('/api/keys');
+      if (!res.ok) throw new Error('Failed to fetch keys');
+      const data = await res.json();
+      if (data.success) setKeys(data.keys);
+    } catch (e) { console.error('Fetch Keys Error:', e); }
   }, []);
 
-  const fetchKeys = async () => {
-    const res = await fetch('/api/keys');
-    const data = await res.json();
-    if (data.success) setKeys(data.keys);
-  };
+  useEffect(() => {
+    const init = async () => {
+      await fetchKeys();
+    };
+    init();
+  }, [fetchKeys]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!newKeyName) return;
     setLoading(true);
-    const res = await fetch('/api/keys', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newKeyName })
-    });
-    const data = await res.json();
-    if (data.success) {
-      setGeneratedKey(data.key);
-      setTestKey(data.key); 
-      setNewKeyName('');
-      fetchKeys();
-    }
+    try {
+      const res = await fetch('/api/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newKeyName })
+      });
+      
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        throw new Error('Invalid server response');
+      }
+
+      if (data.success) {
+        setGeneratedKey(data.key);
+        setTestKey(data.key); 
+        setNewKeyName('');
+        fetchKeys();
+      } else {
+        alert(data.error || 'Failed to create key');
+      }
+    } catch (e) { alert(e.message); }
     setLoading(false);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Estás seguro de revocar esta llave API?')) return;
-    const res = await fetch('/api/keys', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-    const data = await res.json();
-    if (data.success) fetchKeys();
+    if (!confirm('Are you sure you want to revoke this API key?')) return;
+    try {
+      const res = await fetch('/api/keys', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      
+      if (!res.ok) throw new Error('Failed to delete key');
+      const data = await res.json();
+      if (data.success) fetchKeys();
+    } catch (e) { alert(e.message); }
   };
 
   const handleTestAPI = async () => {
@@ -70,10 +96,16 @@ export default function Integrations() {
         },
         body: JSON.stringify({ url: testUrl })
       });
-      const data = await res.json();
-      setTestResponse(data);
+      
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        setTestResponse(data);
+      } catch (parseErr) {
+        setTestResponse({ error: 'Invalid JSON response', raw: text.substring(0, 500) });
+      }
     } catch (err) {
-      setTestResponse({ error: 'Fallo al conectar con la API', details: err.message });
+      setTestResponse({ error: 'Connection failure', details: err.message });
     }
     setTesting(false);
   };
@@ -85,81 +117,109 @@ export default function Integrations() {
   };
 
   return (
-    <div className="animate-fade-in pb-20">
-      <header className="flex justify-between items-center mb-12 flex-mobile-col gap-6">
-        <div>
-          <Link href="/" className="flex items-center gap-2 mb-4" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
-            <ArrowLeft size={16} /> Volver al Tablero
-          </Link>
-          <h1 style={{ marginBottom: '0.25rem' }}>Integraciones <span style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>API</span></h1>
-          <p style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Gestiona credenciales y prueba tus microservicios</p>
-        </div>
-        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-          <Zap size={24} style={{ color: 'var(--primary-light)' }} />
-        </div>
-      </header>
-
-      <div className="flex gap-8 flex-mobile-col" style={{ alignItems: 'flex-start' }}>
+    <div className="container-full animate-fade-in section-padding">
+      {/* Editorial Header */}
+      <div className="mb-24">
+        <Link href="/" className="inline-flex items-center gap-3 text-[11px] font-black text-text-dim hover:text-primary transition-all uppercase tracking-[0.3em] no-underline mb-12">
+          <ArrowLeft size={16} />
+          Protocol Dashboard
+        </Link>
         
-        <div className="flex flex-col gap-8" style={{ flex: 1 }}>
-          {/* Key Management */}
-          <section className="velo-card">
-            <div className="flex items-center gap-4 mb-8">
-              <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '0.6rem', borderRadius: '10px', color: 'var(--primary-light)' }}>
-                <Key size={20} />
-              </div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Gestión de Credenciales</h3>
+        <div className="flex flex-col md:flex-row justify-between items-end gap-16">
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-6">
+              <span className="velo-badge bg-secondary/10 text-secondary-light border-secondary/20">API Connect</span>
+              <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.2em]">Protocol v5.0.4</span>
             </div>
-            
-            <form onSubmit={handleCreate} className="velo-input-group mb-8" style={{ padding: '0.5rem', alignItems: 'center' }}>
-              <Database size={18} style={{ marginLeft: '1rem', color: 'var(--text-dim)' }} />
-              <input 
-                type="text" 
-                placeholder="Nombre (ej. Bot Performance v1)" 
-                className="velo-input"
-                value={newKeyName}
-                onChange={e => setNewKeyName(e.target.value)}
-                required
-              />
-              <button type="submit" className="velo-btn-primary" disabled={loading}>
-                {loading ? <RefreshCw className="animate-spin" size={18} /> : <Plus size={18} />}
-                <span>Generar</span>
-              </button>
+            <h1 className="text-8xl font-black tracking-tighter text-white leading-none">
+              Developer <span style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }} className="italic">Integrations.</span>
+            </h1>
+            <p className="text-2xl font-medium text-text-muted max-w-3xl mt-10 leading-relaxed">
+              Manage your API credentials, generate secure signatures, and validate infrastructure connections in our high-fidelity sandbox.
+            </p>
+          </div>
+
+          <div className="p-8 bg-secondary/10 border border-secondary/20 rounded-3xl text-secondary shadow-[0_0_50px_rgba(139,92,246,0.15)]">
+            <Lock size={48} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-20 items-start">
+        {/* Main Content (8/12) */}
+        <div className="col-span-12 lg:col-span-8 space-y-12">
+          
+          {/* Key Management */}
+          <section className="velo-card p-16">
+            <div className="flex justify-between items-center mb-16 pb-10 border-b border-white/[0.05]">
+              <div className="flex items-center gap-6">
+                <div className="p-5 bg-primary/10 rounded-2xl text-primary border border-primary/20">
+                  <Key size={32} />
+                </div>
+                <div>
+                  <h3 className="text-3xl font-black tracking-tight text-white">API Credentials</h3>
+                  <p className="text-[11px] font-black text-text-dim uppercase tracking-widest mt-2">Authenticated Telemetry Nodes</p>
+                </div>
+              </div>
+              <span className="text-[12px] font-black text-text-dim uppercase tracking-[0.2em] bg-white/[0.03] px-6 py-3 rounded-full border border-white/[0.05]">
+                {keys.length} Active Key{keys.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <form onSubmit={handleCreate} className="flex flex-col gap-10 mb-16">
+              <div className="velo-input-group p-3">
+                <div className="flex items-center pl-8 text-text-dim">
+                  <Database size={24} />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Key name (e.g. Production Server)" 
+                  className="velo-input px-8 text-xl"
+                  value={newKeyName}
+                  onChange={e => setNewKeyName(e.target.value)}
+                  required
+                />
+                <button type="submit" className="velo-btn-primary px-12 py-5" disabled={loading}>
+                  {loading ? <RefreshCw className="animate-spin" size={24} /> : <Plus size={24} />}
+                  <span>{loading ? 'Generating...' : 'Initialize Key'}</span>
+                </button>
+              </div>
             </form>
 
             {generatedKey && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem' }} className="animate-fade-in">
-                <div className="flex items-center gap-2 mb-2" style={{ color: '#10b981', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase' }}>
-                  <ShieldCheck size={14} /> Llave generada con éxito
+              <div className="p-10 bg-success/10 border border-success/20 rounded-[32px] mb-16 animate-fade-in relative overflow-hidden group">
+                <div className="flex items-center gap-4 mb-6">
+                  <ShieldCheck size={20} className="text-success" />
+                  <span className="text-[12px] font-black text-success uppercase tracking-[0.2em]">Master Key Generated — Securely Store Now</span>
                 </div>
-                <div className="flex items-center gap-4 bg-black p-4 rounded-xl border border-white/5">
-                  <code style={{ flex: 1, fontFamily: 'monospace', color: 'white', fontSize: '1rem' }}>{generatedKey}</code>
-                  <button onClick={() => copyToClipboard(generatedKey, 'new')} className="velo-btn-primary" style={{ background: copiedId === 'new' ? '#10b981' : 'var(--primary)', padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                    {copiedId === 'new' ? <Check size={16} /> : <Copy size={16} />}
-                    <span>{copiedId === 'new' ? 'Copiado' : 'Copiar'}</span>
+                <div className="flex items-center gap-6 bg-black/40 p-6 rounded-2xl border border-white/5 shadow-inner">
+                  <code className="flex-1 font-mono text-lg text-white tracking-widest truncate">{generatedKey}</code>
+                  <button onClick={() => copyToClipboard(generatedKey, 'new')} className={`velo-btn-primary !px-10 !py-4 ${copiedId === 'new' ? '!bg-success !border-success' : ''}`}>
+                    {copiedId === 'new' ? <Check size={18} /> : <Copy size={18} />}
+                    <span>{copiedId === 'new' ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-6">
                {keys.length === 0 ? (
-                 <div style={{ textAlign: 'center', padding: '3rem', border: '1px dashed var(--glass-border)', borderRadius: '16px', color: 'var(--text-dim)' }}>
-                   <Code size={32} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-                   <p>No hay llaves activas.</p>
+                 <div className="py-32 text-center border border-dashed border-white/[0.05] rounded-[32px] opacity-30">
+                   <Activity size={64} className="mx-auto mb-8 text-text-dim" strokeWidth={1} />
+                   <p className="text-[12px] font-black uppercase tracking-[0.2em]">No active credentials detected</p>
                  </div>
                ) : (
                  keys.map(k => (
-                   <div key={k.id} className="flex justify-between items-center p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
-                     <div className="flex items-center gap-4">
-                       <div style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%', boxShadow: '0 0 10px #10b981' }} />
+                   <div key={k.id} className="flex justify-between items-center p-10 bg-white/[0.02] border border-white/[0.05] rounded-[32px] hover:border-primary/30 transition-all group">
+                     <div className="flex items-center gap-10">
+                       <div className="w-3 h-3 rounded-full bg-success shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
                        <div className="flex flex-col">
-                         <span style={{ fontWeight: 600 }}>{k.name}</span>
-                         <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Creada el {new Date(k.created_at).toLocaleDateString()}</span>
+                         <span className="text-2xl font-black text-white tracking-tighter group-hover:text-primary transition-all uppercase">{k.name}</span>
+                         <span className="text-[12px] font-bold text-text-dim uppercase mt-2 tracking-widest">Node Provisioned: {new Date(k.created_at).toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' })}</span>
                        </div>
                      </div>
-                     <button onClick={() => handleDelete(k.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' }}>
-                       <Trash2 size={16} />
+                     <button onClick={() => handleDelete(k.id)} className="p-5 text-text-dim hover:text-error hover:bg-error/10 rounded-2xl transition-all border border-transparent hover:border-error/20">
+                       <Trash2 size={24} />
                      </button>
                    </div>
                  ))
@@ -167,116 +227,154 @@ export default function Integrations() {
             </div>
           </section>
 
-          {/* Playground */}
-          <section className="velo-card">
-             <div className="flex justify-between items-center mb-8">
-               <div className="flex items-center gap-4">
-                 <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '0.6rem', borderRadius: '10px', color: 'var(--secondary-light)' }}>
-                   <Terminal size={20} />
+          {/* Playground / Sandbox */}
+          <section className="velo-card p-16">
+             <div className="flex justify-between items-center mb-16 pb-10 border-b border-white/[0.05]">
+               <div className="flex items-center gap-6">
+                 <div className="p-5 bg-secondary/10 rounded-2xl text-secondary border border-secondary/20">
+                   <Terminal size={32} />
                  </div>
-                 <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Laboratorio de Pruebas</h3>
+                 <div>
+                   <h3 className="text-3xl font-black tracking-tight text-white">API Sandbox</h3>
+                   <p className="text-[11px] font-black text-text-dim uppercase tracking-widest mt-2">Protocol Simulation Environment</p>
+                 </div>
                </div>
-               <span className="velo-badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>Experimental Look</span>
+               <span className="flex items-center gap-3 text-[12px] font-black text-success uppercase tracking-[0.2em] bg-success/5 px-6 py-3 rounded-full border border-success/10">
+                 <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_10px_var(--success)]" />
+                 Simulation Active
+               </span>
              </div>
              
-             <div className="flex gap-8 flex-mobile-col">
-               <div className="flex flex-col gap-6" style={{ flex: 1 }}>
-                 <div className="flex flex-col gap-2">
-                   <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>API KEY</label>
-                   <div style={{ borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center' }}>
-                     <Key size={14} style={{ color: 'var(--primary-light)', marginRight: '0.75rem' }} />
-                     <input type="text" placeholder="ps_..." style={{ background: 'transparent', border: 'none', color: 'white', padding: '0.5rem 0', width: '100%', outline: 'none' }} value={testKey} onChange={e => setTestKey(e.target.value)} />
-                   </div>
-                 </div>
-
-                 <div className="flex flex-col gap-2">
-                   <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-dim)', textTransform: 'uppercase' }}>URL DESTINO</label>
-                   <div style={{ borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center' }}>
-                     <Globe size={14} style={{ color: 'var(--primary-light)', marginRight: '0.75rem' }} />
-                     <input type="url" style={{ background: 'transparent', border: 'none', color: 'white', padding: '0.5rem 0', width: '100%', outline: 'none' }} value={testUrl} onChange={e => setTestUrl(e.target.value)} />
-                   </div>
-                 </div>
-
-                 <button onClick={handleTestAPI} className="velo-btn-primary" disabled={testing || !testKey} style={{ background: 'var(--accent-gradient)', color: 'white', width: '100%', justifyContent: 'center' }}>
-                   {testing ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
-                   <span>{testing ? 'Procesando...' : 'Probar Petición'}</span>
-                 </button>
-               </div>
-
-               <div style={{ flex: 1.2, background: '#08080a', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                 <div style={{ background: '#111114', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)' }}>
-                   <div className="flex gap-1.5">
-                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f56' }} />
-                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e' }} />
-                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#27c93f' }} />
-                   </div>
-                   <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase' }}>Response Console</span>
-                 </div>
-                 <div style={{ padding: '1.5rem', minHeight: '260px', overflowY: 'auto' }}>
-                    {testResponse ? (
-                      <div>
-                        <div style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 800, background: testResponse.error ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: testResponse.error ? '#ef4444' : '#10b981', marginBottom: '1rem', border: '1px solid currentColor' }}>
-                          {testResponse.error ? 'ERROR' : 'SUCCESS'}
-                        </div>
-                        <pre style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: testResponse.error ? '#ff7b72' : '#7ee787', whiteSpace: 'pre-wrap' }}>
-                          {JSON.stringify(testResponse, null, 2)}
-                        </pre>
+             <div className="flex flex-col gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="flex flex-col gap-4">
+                    <label className="text-[11px] font-black text-text-dim uppercase tracking-[0.3em] px-2">Target Endpoint URL</label>
+                    <div className="velo-input-group p-2">
+                      <div className="flex items-center pl-6 text-text-dim">
+                        <Globe size={20} />
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-4" style={{ height: '100%', minHeight: '200px', opacity: 0.2 }}>
-                        <Database size={40} />
-                        <span style={{ fontSize: '0.8rem' }}>Esperando ejecución...</span>
+                      <input 
+                        type="url" 
+                        className="velo-input px-6 text-lg"
+                        value={testUrl}
+                        onChange={e => setTestUrl(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <label className="text-[11px] font-black text-text-dim uppercase tracking-[0.3em] px-2">Authorization Token</label>
+                    <div className="velo-input-group p-2">
+                      <div className="flex items-center pl-6 text-text-dim">
+                        <Key size={20} />
                       </div>
-                    )}
-                 </div>
-               </div>
+                      <input 
+                        type="text" 
+                        className="velo-input px-6 text-lg"
+                        placeholder="ps_..."
+                        value={testKey}
+                        onChange={e => setTestKey(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleTestAPI} 
+                  className="velo-btn-secondary w-full py-6 text-xl shadow-[0_20px_40px_rgba(139,92,246,0.1)]" 
+                  disabled={testing || !testKey}
+                >
+                  {testing ? <RefreshCw size={24} className="animate-spin" /> : <Send size={24} />}
+                  <span>{testing ? 'Executing handshake...' : 'Dispatch API Request'}</span>
+                </button>
+
+                <div className="rounded-[40px] border border-white/[0.05] bg-black/60 overflow-hidden shadow-2xl">
+                  <div className="bg-white/[0.03] px-10 py-5 flex items-center justify-between border-b border-white/[0.05]">
+                     <div className="flex gap-3">
+                        <div className="w-3 h-3 rounded-full bg-error/20" />
+                        <div className="w-3 h-3 rounded-full bg-warning/20" />
+                        <div className="w-3 h-3 rounded-full bg-success/20" />
+                     </div>
+                     <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.3em]">Telemetry Response Output</span>
+                  </div>
+                  <div className="p-12 min-h-[400px] font-mono text-sm overflow-auto">
+                     {testResponse ? (
+                       <div className="flex flex-col gap-8">
+                          <div className={`px-6 py-2 rounded-full w-fit border text-[11px] font-black uppercase tracking-[0.2em] ${testResponse.error ? 'border-error/30 text-error bg-error/5' : 'border-success/30 text-success bg-success/5'}`}>
+                             Protocol Status: {testResponse.error ? 'Failure' : '200 OK — Success'}
+                          </div>
+                          <pre className={`p-8 rounded-[32px] bg-white/[0.02] border border-white/[0.05] leading-relaxed ${testResponse.error ? 'text-error' : 'text-primary-light shadow-[0_0_30px_rgba(59,130,246,0.05)]'}`}>
+                             {JSON.stringify(testResponse, null, 2)}
+                          </pre>
+                       </div>
+                     ) : (
+                       <div className="h-full flex flex-col items-center justify-center text-text-dim opacity-20 gap-8 mt-24">
+                          <Activity size={80} strokeWidth={1} className="animate-pulse" />
+                          <span className="tracking-[0.8em] uppercase text-[12px] font-black">Awaiting Handshake</span>
+                       </div>
+                     )}
+                  </div>
+                </div>
              </div>
           </section>
         </div>
 
-        {/* Sidebar Docs */}
-        <aside style={{ width: '340px' }} className="flex-mobile-col w-full">
-          <div className="velo-card">
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '2rem', color: 'var(--primary-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Documentación</h3>
+        {/* Sidebar (4/12) */}
+        <aside className="col-span-12 lg:col-span-4 flex flex-col gap-12">
+          <div className="velo-card p-16">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.4em] mb-16 text-white flex items-center gap-4">
+               <Server size={20} className="text-secondary" />
+               Technical Protocol
+            </h4>
             
-            <div className="flex flex-col gap-8">
-              <div className="flex gap-4">
-                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.05)', lineHeight: 1 }}>01</div>
-                <div>
-                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.25rem' }}>Headers</h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>Utiliza la llave en cada petición.</p>
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.7rem' }}>
-                    <span style={{ color: 'var(--primary-light)' }}>X-API-KEY:</span> <code>ps_...</code>
-                  </div>
+            <div className="flex flex-col gap-20">
+              <div className="flex flex-col gap-6">
+                <h5 className="text-[13px] font-black uppercase text-white tracking-[0.2em] flex items-center gap-4">
+                   <div className="w-6 h-[2px] bg-secondary shadow-[0_0_10px_var(--secondary)]" />
+                   Authentication
+                </h5>
+                <p className="text-[15px] text-text-muted leading-relaxed font-medium">Pass your unique cryptographic key in the <code className="text-secondary font-black bg-secondary/10 px-2 py-1 rounded-md">X-API-KEY</code> header for every request.</p>
+                <div className="p-6 bg-black/60 rounded-3xl border border-white/[0.05] font-mono text-[12px] shadow-inner">
+                  <span className="text-secondary-light font-black">X-API-KEY:</span> <span className="text-text-dim">ps_master_...</span>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.05)', lineHeight: 1 }}>02</div>
-                <div>
-                  <h4 style={{ font: '0.9rem', fontWeight: 700, marginBottom: '0.25rem' }}>Endpoint</h4>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>Dispara auditorías vía POST.</p>
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.7rem' }}>
-                    <code>/api/v1/scan</code>
-                  </div>
+              <div className="flex flex-col gap-6">
+                <h5 className="text-[13px] font-black uppercase text-white tracking-[0.2em] flex items-center gap-4">
+                   <div className="w-6 h-[2px] bg-primary shadow-[0_0_10px_var(--primary)]" />
+                   Scan Endpoint
+                </h5>
+                <p className="text-[15px] text-text-muted leading-relaxed font-medium">Trigger asynchronous audits via POST requests to our distributed telemetry nodes.</p>
+                <div className="p-6 bg-black/60 rounded-3xl border border-white/[0.05] font-mono text-[12px] shadow-inner">
+                  <span className="text-primary-light font-black uppercase">POST</span> <span className="text-text-dim">/api/v1/scan</span>
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)', padding: '1rem', borderRadius: '12px', fontSize: '0.75rem', color: 'var(--primary-light)', display: 'flex', gap: '8px' }}>
-                 <Zap size={16} />
-                 <span><strong>Tip:</strong> Usa <code>network: "5g"</code> para máxima precisión.</span>
+              <div className="p-8 bg-primary/10 border border-primary/20 rounded-[32px] group hover:bg-primary/[0.15] transition-all">
+                 <div className="flex gap-6">
+                    <Zap size={24} className="text-primary shrink-0" />
+                    <p className="text-[12px] font-bold text-text-secondary leading-relaxed uppercase tracking-wider">
+                      Use <code className="text-primary-light font-black">mode: &quot;ultra&quot;</code> for high-precision analysis in enterprise environments.
+                    </p>
+                 </div>
               </div>
             </div>
           </div>
 
-          <div className="velo-card mt-4" style={{ background: 'var(--accent-gradient)', padding: '2px' }}>
-            <div style={{ background: 'var(--background)', borderRadius: '18px', padding: '1.5rem' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.5rem' }}>VeloMetric Suite</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Optimizada para integración con LLMs modernos.</p>
-            </div>
+          <div className="velo-card p-16 bg-gradient-to-br from-secondary/20 via-transparent to-primary/20 border-white/10 text-center relative overflow-hidden group">
+             <ShieldCheck size={80} className="mx-auto mb-10 text-secondary" strokeWidth={1} />
+             <h4 className="text-3xl font-black uppercase tracking-tighter text-white mb-4">Enterprise Grade</h4>
+             <p className="text-[15px] font-medium text-text-muted leading-relaxed max-w-[280px] mx-auto">
+                All communications are secured via TLS 1.3 and audited by our core security sentinel in real-time.
+             </p>
+             <div className="mt-12">
+                <button className="velo-btn-primary w-full justify-center group-hover:scale-[1.02] transition-transform">
+                   Request Dedicated Node
+                </button>
+             </div>
+             <Activity size={180} className="absolute -bottom-10 -left-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none" />
           </div>
         </aside>
-
       </div>
     </div>
   );
