@@ -5,7 +5,7 @@ import {
   Activity, Search, RefreshCw, ChevronRight, Zap, 
   Globe, Smartphone, Wifi, Cpu, SignalHigh,
   Terminal, Shield, BarChart3, Clock, ArrowRight,
-  Database, Server, Lock, LayoutGrid, ShieldCheck
+  Database, Server, Lock, LayoutGrid, ShieldCheck, Key
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -288,6 +288,10 @@ export default function Home() {
                    <span>Review Documentation</span>
                    <ArrowRight size={20} />
                  </button>
+                 <Link href="/keys" className="velo-btn-primary !bg-primary/5 !border-primary/10 hover:!bg-primary/20 w-full justify-center py-5 no-underline">
+                   <Key size={20} />
+                   <span>Manage API Keys</span>
+                 </Link>
               </div>
            </div>
         </div>
