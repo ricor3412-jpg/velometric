@@ -18,3 +18,13 @@ export async function GET() {
     }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const { clearAllScans } = await import('@/lib/db');
+    await clearAllScans();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

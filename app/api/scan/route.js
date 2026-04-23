@@ -69,9 +69,24 @@ export async function POST(req) {
     const domain = await getOrCreateDomain(domainName, parsedUrl.origin);
     const scanId = await startScan(domain.id, networkProfile);
 
-    // Fire and forget the heavy process
+    // Fire and forget the heavy process using Next.js 'after' API
+    // This ensures the process continues even after the response is sent on Vercel
     const crawlUrl = parsedUrl.origin.endsWith('/') ? parsedUrl.origin : parsedUrl.origin + '/';
-    runAsyncAuditProcess(scanId, crawlUrl, networkProfile);
+    
+    // Attempt to use 'after' if available (Next.js 15+)
+    try {
+      const { after } = await import('next/server');
+      after(async () => {
+        try {
+          await runAsyncAuditProcess(scanId, crawlUrl, networkProfile);
+        } catch (e) {
+          console.error('[API after] Background process error:', e);
+        }
+      });
+    } catch (e) {
+      // Fallback for older Next.js versions or local dev
+      runAsyncAuditProcess(scanId, crawlUrl, networkProfile);
+    }
 
     const isVercel = process.env.VERCEL === '1';
 
@@ -79,10 +94,39 @@ export async function POST(req) {
       success: true, 
       scanId, 
       domain: domainName,
-      warning: isVercel ? 'Vercel Serverless Functions have execution limits. Large site audits may be interrupted.' : null
+      message: 'Scan started in background.'
     });
   } catch (error) {
     console.error('API Post Scan Detail Error:', error);
     return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req) {
+  try {
+    const { id, action } = await req.json();
+    if (action === 'stop') {
+      const { updateScanStatus } = await import('@/lib/db');
+      await updateScanStatus(id, 'cancelled');
+      return NextResponse.json({ success: true, message: 'Scan stop signal sent' });
+    }
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
+  
+  if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
+
+  try {
+    const { deleteScan } = await import('@/lib/db');
+    await deleteScan(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

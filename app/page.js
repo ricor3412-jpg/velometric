@@ -5,7 +5,8 @@ import {
   Activity, Search, RefreshCw, ChevronRight, Zap, 
   Globe, Smartphone, Wifi, Cpu, SignalHigh,
   Terminal, Shield, BarChart3, Clock, ArrowRight,
-  Database, Server, Lock, LayoutGrid, ShieldCheck, Key
+  Database, Server, Lock, LayoutGrid, ShieldCheck, Key,
+  Trash2, XCircle
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -76,6 +77,47 @@ export default function Home() {
     setLoading(false);
   };
 
+  const stopScan = async (id, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to stop this scan?')) return;
+    
+    try {
+      const res = await fetch('/api/scan', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'stop' })
+      });
+      if (res.ok) fetchScans();
+    } catch (e) {
+      console.error('Stop Scan Error:', e);
+    }
+  };
+
+  const deleteScan = async (id, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Delete this scan record?')) return;
+    
+    try {
+      const res = await fetch(`/api/scan?id=${id}`, { method: 'DELETE' });
+      if (res.ok) fetchScans();
+    } catch (e) {
+      console.error('Delete Scan Error:', e);
+    }
+  };
+
+  const clearHistory = async () => {
+    if (!confirm('WARNING: This will permanently delete ALL scan history. Continue?')) return;
+    
+    try {
+      const res = await fetch('/api/scans', { method: 'DELETE' });
+      if (res.ok) fetchScans();
+    } catch (e) {
+      console.error('Clear History Error:', e);
+    }
+  };
+
   return (
     <div className="container-full animate-fade-in section-padding">
       
@@ -125,7 +167,7 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="text-3xl font-black tracking-tight text-white">System Auditor</h3>
-                <p className="text-[11px] font-black text-text-dim uppercase tracking-widest mt-2">Execute high-fidelity performance scan (Top 10 pages, Dual Device)</p>
+                <p className="text-[11px] font-black text-text-dim uppercase tracking-widest mt-2">Execute high-fidelity performance scan (Top 5 pages, Dual Device)</p>
               </div>
             </div>
 
@@ -177,15 +219,25 @@ export default function Home() {
 
           {/* Intelligence Feed */}
           <div className="flex flex-col gap-12">
-            <div className="flex items-center justify-between px-4 mb-6">
-               <div className="flex items-center gap-8">
-                  <Activity size={28} className="text-primary" />
-                  <h5 className="text-lg font-black uppercase tracking-[0.3em] text-white">Historical Telemetry Logs</h5>
-               </div>
-               <div className="text-[11px] font-black text-text-dim uppercase tracking-[0.2em] bg-white/[0.03] px-6 py-3 rounded-full border border-white/[0.05]">
-                  {scans.length} Node{scans.length !== 1 ? 's' : ''} Recorded
-               </div>
-            </div>
+             <div className="flex items-center justify-between px-4 mb-6">
+                <div className="flex items-center gap-8">
+                   <Activity size={28} className="text-primary" />
+                   <h5 className="text-lg font-black uppercase tracking-[0.3em] text-white">Historical Telemetry Logs</h5>
+                </div>
+                <div className="flex items-center gap-6">
+                   <div className="text-[11px] font-black text-text-dim uppercase tracking-[0.2em] bg-white/[0.03] px-6 py-3 rounded-full border border-white/[0.05]">
+                      {scans.length} Node{scans.length !== 1 ? 's' : ''} Recorded
+                   </div>
+                   {scans.length > 0 && (
+                     <button 
+                       onClick={clearHistory}
+                       className="text-[10px] font-black text-error/60 hover:text-error uppercase tracking-[0.2em] border border-error/20 hover:border-error/40 px-6 py-3 rounded-full transition-all"
+                     >
+                       Clear History
+                     </button>
+                   )}
+                </div>
+             </div>
 
             <div className="grid grid-cols-1 gap-10">
               {scans.length === 0 ? (
@@ -198,7 +250,7 @@ export default function Home() {
                   <Link 
                     href={`/report/${scan.name}`} 
                     key={scan.id || i} 
-                    className="velo-card !p-10 flex justify-between items-center no-underline group hover:!bg-white/[0.04] transition-all duration-500"
+                    className="velo-card !p-10 flex justify-between items-center no-underline group hover:!bg-white/[0.04] transition-all duration-500 relative"
                   >
                     <div className="flex items-center gap-12 pl-4">
                       <div className="p-6 bg-white/[0.03] border border-white/[0.05] rounded-2xl group-hover:border-primary/30 transition-all relative">
@@ -210,7 +262,11 @@ export default function Home() {
                       <div className="flex flex-col">
                         <span className="text-3xl font-black text-white tracking-tighter mb-3">{scan.name}</span>
                         <div className="flex items-center gap-6">
-                          <span className={`velo-badge ${scan.status === 'completed' ? 'velo-badge-success' : 'velo-badge-running'}`}>
+                          <span className={`velo-badge ${
+                            scan.status === 'completed' ? 'velo-badge-success' : 
+                            scan.status === 'failed' ? 'velo-badge-error' : 
+                            scan.status === 'cancelled' ? 'velo-badge-warning' : 'velo-badge-running'
+                          }`}>
                             {scan.status.toUpperCase()}
                           </span>
                           <span className="text-[12px] font-bold text-text-dim flex items-center gap-2">
@@ -221,15 +277,34 @@ export default function Home() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-20 pr-8">
-                       <div className="flex flex-col items-end">
-                         <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.2em] mb-3">Performance Index</span>
-                         <span className={`text-5xl font-black font-mono tracking-tighter ${scan.results?.performance >= 90 ? 'text-success' : scan.results?.performance >= 50 ? 'text-warning' : 'text-error'}`}>
+                    <div className="flex items-center gap-12 pr-8">
+                       <div className="flex flex-col items-end min-w-[120px]">
+                         <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.2em] mb-3">Performance</span>
+                         <span className={`text-5xl font-black font-mono tracking-tighter ${scan.results?.performance >= 90 ? 'text-success' : scan.results?.performance >= 50 ? 'text-warning' : scan.results?.performance ? 'text-error' : 'text-text-dim'}`}>
                             {scan.results?.performance || '--'}
                          </span>
                        </div>
-                       <div className="p-5 rounded-2xl bg-white/[0.03] text-text-dim group-hover:text-primary group-hover:bg-primary/10 transition-all">
-                         <ChevronRight size={28} />
+                       
+                       <div className="flex items-center gap-4">
+                          {scan.status === 'running' && (
+                            <button 
+                              onClick={(e) => stopScan(scan.id, e)}
+                              className="p-5 rounded-2xl bg-warning/5 text-warning/40 hover:bg-warning/20 hover:text-warning transition-all border border-warning/10"
+                              title="Stop Analysis"
+                            >
+                              <XCircle size={24} />
+                            </button>
+                          )}
+                          <button 
+                            onClick={(e) => deleteScan(scan.id, e)}
+                            className="p-5 rounded-2xl bg-error/5 text-error/40 hover:bg-error/20 hover:text-error transition-all border border-error/10"
+                            title="Delete Record"
+                          >
+                            <Trash2 size={24} />
+                          </button>
+                          <div className="p-5 rounded-2xl bg-white/[0.03] text-text-dim group-hover:text-primary group-hover:bg-primary/10 transition-all ml-4">
+                            <ChevronRight size={28} />
+                          </div>
                        </div>
                     </div>
                   </Link>
